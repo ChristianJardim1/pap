@@ -68,7 +68,7 @@ void executaP(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc,
 int executaI(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados,&stack);
 void salvarMemDados(int *memdados);
 void initStack(Stack *stack);
-void pop(Stack *stack);
+void pop(Stack *stack, int *r, int *md, int *pc);
 
 
 //PROGRAMA PRINCIPAL
@@ -126,6 +126,7 @@ void menu() {
 			executaI(meminst, &instrucao, &dec, &pc,registrador, memdados,&stack);
 			break;
 		case 10:
+      pop(&stack, registrador, memdados, &pc);
 			break;
 		case 11:
 			printf("VOCE SAIU!!!");
@@ -515,7 +516,15 @@ void push(Stack *stack, int *r, int *md, int *pc){
  stack->top=nNode;
 }
 
-void pop(Stack *stack){
+void pop(Stack *stack, int *r, int *md, int *pc){
+ int i;
+ for(i=0;i<8;i++){
+  r[i]=stack->top->ra[i];
+ }
+ for(i=0;i<8;i++){
+  md[i]=stack->top->mda[i];
+ }
+ *pc=stack->top->pca;
  Node *temp=stack->top;
  stack->top=stack->top->next;
  free(temp);
