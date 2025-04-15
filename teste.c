@@ -35,6 +35,18 @@ typedef struct {
 	Tipo_Instrucao tipo;
 } Deco;
 
+typedef struct Node{
+ int ra[8];
+ int mda[256];
+ int pca;
+ struct Node *next;
+}Node;
+
+typedef struct Stack{
+ Node *top;
+}Stack;
+
+void push(Stack *stack, int *r, int *md, int *pc);
 
 //NOMES DAS FUNCOES
 void menu();
@@ -52,9 +64,11 @@ void printInstrucao(Deco *dec);
 void controle(Deco *inst, int *reg, int *memdado, int *pc);
 int ULA(int op1, int op2, int opULA, int *overflow);
 void salvarAssembly(char mem[256][17]);
-void executaP(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados);
-int executaI(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados);
+void executaP(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados,&stack);
+int executaI(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados,&stack);
 void salvarMemDados(int *memdados);
+void initStack(Stack *stack);
+void pop(Stack *stack);
 
 
 //PROGRAMA PRINCIPAL
@@ -66,6 +80,8 @@ int main() {
 //MENU
 void menu() {
 	Deco dec;
+  Stack stack;
+  initStack(&stack);
 	MEMINST;
 	MEMDADOS;
 	REGISTRADOR;
@@ -104,10 +120,10 @@ void menu() {
 			salvarMemDados(memdados);
 			break;
 		case 8:
-			executaP(meminst, &instrucao, &dec, &pc,registrador,memdados);
+			executaP(meminst, &instrucao, &dec, &pc,registrador,memdados, &stack);
 			break;
 		case 9:
-			executaI(meminst, &instrucao, &dec, &pc,registrador, memdados);
+			executaI(meminst, &instrucao, &dec, &pc,registrador, memdados,&stack);
 			break;
 		case 10:
 			break;
@@ -434,13 +450,14 @@ void salvarAssembly(char mem[256][17]) {
 }
 
 
-int executaI(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados) {
+int executaI(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados,&stack) {
 	if (strcmp(meminst[*pc], "0000000000000000") == 0) {
 		printf("Fim do programa!");
 		return 1;
 	}
 	else
 	{
+    push(stack,registrador,memdados, pc);
 		decodificarInstrucao(meminst[*pc], inst, dec);
 		int pc_antes = *pc;
 		printInstrucao(dec);
@@ -452,7 +469,7 @@ int executaI(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, 
 	}
 }
 
-void executaP(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados) {
+void executaP(char meminst[256][17], struct instrucao *inst, Deco *dec, int *pc, int *registrador, int *memdados,&stack) {
 	int j;
 	for(int i=*pc;; i++) {
 		j = executaI(meminst, inst, dec, pc, registrador, memdados);
@@ -478,4 +495,28 @@ void salvarMemDados(int *memdados) {
 		fprintf(arquivo, "%d\n", memdados[i]);
 	}
 	fclose(arquivo);
+}
+
+void initStack(Stack *stack){
+ stack->top=NULL;
+}
+
+void push(Stack *stack, int *r, int *md, int *pc){
+ Node *nNode = (Node*)malloc(sizeof(Node));
+ int i;
+ for(i=0;i<8;i++){
+  nNode->ra[i]=r[i];
+ }
+ for(i=0;i<8;i++){
+  nNode->mda[i]=md[i];
+ }
+ nNode->pca=*pc;
+ nNode->next=nNode->top;
+ stack->top=nNode;
+}
+
+void pop(Stack *stack){
+ Node *temp=stack->top;
+ stack->top=stack->top->next;
+ free(temp);
 }
